@@ -161,6 +161,9 @@ class Window {
     this.handleEvent();
 
     this.webContents = this.browserWindow.webContents;
+    // 禁用WebRTC暴露客户端IP地址
+    this.webContents.setWebRTCIPHandlingPolicy('disable_non_proxied_udp');
+
     this.id = this.browserWindow.webContents.windowId = this.browserWindow.id;
     this.disposeFn = [];
     this.selfClosed = true;
