@@ -104,7 +104,7 @@ module.exports = [
       filename: '[name].js',
     },
     node: {
-      __dirname: true,
+      __dirname: false,
     },
     externals(context, request, callback) {
       if (/^..\/extension/.test(request)) {
@@ -115,6 +115,16 @@ module.exports = [
     },
     module: {
       rules: [
+        {
+          test: /preload\.js$/,
+          exclude: /node_modules/,
+          use: [{
+            loader: 'file-loader',
+            options: {
+              name: '[name].[ext]',
+            }
+          }]
+        },
         {
           test: /\.js$/,
           exclude: /node_modules/,
@@ -127,5 +137,5 @@ module.exports = [
         $dirname: '__dirname',
       }),
     ],
-  },
+  }
 ];

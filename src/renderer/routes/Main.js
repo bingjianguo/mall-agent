@@ -1,16 +1,19 @@
 /**
  * Created by bingjian on 2017/3/10.
  */
-import React, { PureComponent } from 'react';
+import React, { PureComponent, Fragment } from 'react';
 import { connect } from 'dva';
-import { Button, Form, Input, Select }  from 'antd';
+import { Button, Form, Input, Select, Card, Row, Col, Tooltip }  from 'antd';
 import { remote } from 'electron';
 
 import TitleBar from '../components/TitleBar';
+import FooterToolbar from '../components/FooterToolbar';
 
+import Styles from './Main.less';
 const { windowManager } = remote.getGlobal('services');
 const { Item: FormItem } = Form;
 const { Option } = Select;
+const { TextArea } = Input;
 
 const formItemLayout = {
   labelCol: { span: 6 },
@@ -23,88 +26,283 @@ const formTailLayout = {
 };
 
 @connect((state) => {
+  const { environments } = state.mall;
   return {
-    ...state,
+    environments
   };
 })
 @Form.create({
   mapPropsToFields(props) {
     return {
-      url: {
-        value: 'http://www.weibo.com',
-      },
-      partition: {
-        value: 'role1',
-      }
+      url: Form.createFormField({
+        value: 'http://www.baidu.com',
+      }),
+      envIndex: Form.createFormField({
+        value: '',
+      }),
+    
     }
   }
 })
 export default class MainRouter extends PureComponent {
 
+  state = {
+    currentEnv: {}
+  }
 
-  onCreateWindow = () => {
+  onSaveEnv = () => {
+    const { dispatch, environments } = this.props;
     this.props.form.validateFieldsAndScroll((err, values) => {
       if (err) {
         return;
       }
-      const { partition, url } =values;
-      windowManager.newMallSessionWindow(url, partition);
+      const { proxy, port, userAgent, acceptLanguage, size, screen, envIndex, url } =values;
+      const env = environments[envIndex];
+      env.proxy = proxy;
+      env.userAgent = userAgent;
+      env.port = port;
+      env.proxy = proxy;
+      env.acceptLanguage = acceptLanguage;
+      env.size = size;
+      env.screen = screen;
+
+      dispatch({
+        type: 'mall/save',
+        payload: {
+          environments: [...environments]
+        }
+      })
+    });
+  }
+
+  onCreateWindow = () => {
+    const { environments } = this.props;
+    this.props.form.validateFieldsAndScroll((err, values) => {
+      if (err) {
+        return;
+      }
+      const { envIndex, url } =values;
+      const env = environments[envIndex];
+      windowManager.newMallEnviromentWindow(url, env);
     });
     
   }
 
+  onEnvironmentChanged = (index, e) => {
+    const { environments } = this.props;
+    const { setFieldsValue } = this.props.form;
+    const env = environments[index];
+    const { name, proxy, port, userAgent, acceptLanguage, size, screen } = env;
+    setFieldsValue({
+      name, proxy, port, userAgent, acceptLanguage, size, screen, envIndex: index
+    });
+    this.setState({
+      currentEnv: env
+    });
+  }
+
   render() {
-    const { getFieldDecorator } = this.props.form;
+    const { environments } = this.props;
+    const { getFieldDecorator, getFieldValue } = this.props.form;
+    const name = getFieldValue('name');
     return (
-      <div>
-        <TitleBar />
-        <Form>
-          <FormItem
-            {...formItemLayout} 
-            label="访问地址"
+      <Fragment>
+        <TitleBar>模拟工具</TitleBar>
+        <div className={Styles.main}>
+          <Card title="模拟环境切换" className={Styles.card} bordered={false}>
+            <Form layout="vertical" hideRequiredMark>
+              <Row gutter={16}>
+                <Col lg={6} md={12} sm={24}>
+                  <FormItem
+                    label="访问地址"
+                  >
+                    {getFieldDecorator('url', {
+                      rules: [{
+                        required: true,
+                        message: '请输入需要访问的地址',
+                      }],
+                    })(
+                      <Input />
+                    )}
+                  </FormItem>
+                </Col>
+                <Col xl={{ span: 6, offset: 2 }} lg={{ span: 8 }} md={{ span: 12 }} sm={24}>
+                  <FormItem
+                    label="名称"
+                  >
+                    {getFieldDecorator('envIndex', {
+                      rules: [{
+                        required: true,
+                        message: '请选择模拟环境',
+                      }],
+                    })(
+                      <Select
+                        onChange={this.onEnvironmentChanged}
+                      >
+                        {
+                          environments.map(({id, name}, index) => {
+                            return (
+                              <Option value={index}>{name}</Option>
+                            )
+                          })
+                        }
+                      </Select>
+                    )}
+                    
+                  </FormItem>
+                </Col>
+                <Col xl={{ span: 8, offset: 2 }} lg={{ span: 10 }} md={{ span: 24 }} sm={24}>
+                  <FormItem
+                    label="操作栏"
+                  >
+
+                   <Tooltip 
+                    placement="top" 
+                    title={
+                      <div>模拟环境的参数如果发生改变,需要点击保存后才能生效</div> }
+                  >
+                    <Button 
+                        type="primary" 
+                        onClick={this.onCreateWindow}
+                      >
+                        打开模拟环境
+                      </Button>
+                    </Tooltip>
+                    
+                  </FormItem>
+                  
+                </Col>
+              </Row>
+            </Form>
+          </Card>  
+          <Card 
+            title="模拟环境详情" 
+            className={Styles.card} 
+            bordered={false}
           >
-            {getFieldDecorator('url', {
-              rules: [{
-                required: true,
-                message: '请输入需要访问的地址',
-              }],
-            })(
-              <Input />
-            )}
-          </FormItem>
-          <FormItem
-            {...formItemLayout} 
-            label="角色"
-          >
-            {getFieldDecorator('partition', {
-              rules: [{
-                required: true,
-                message: '请选择角色',
-              }],
-            })(
-              <Select>
-                <Option value="role1">角色1</Option>
-                <Option value="role2">角色2</Option>
-                <Option value="role3">角色3</Option>
-                <Option value="role4">角色4</Option>
-                <Option value="role5">角色5</Option>
-                <Option value="role6">角色6</Option>
-              </Select>
-            )}
-            
-          </FormItem>
-        </Form>
-        <FormItem 
-          {...formTailLayout}
-        >
-          <Button 
-            onClick={this.onCreateWindow}
-          >
-            创建窗口
-          </Button>
-        </FormItem>
-        
-      </div>
+            <Form>
+              <Row gutter={16}>
+                <Col lg={6} md={12} sm={24}>
+                  <FormItem
+                    label="名称"
+                  >
+                    {name}
+                  </FormItem>
+                </Col>
+                <Col xl={{ span: 6, offset: 2 }} lg={{ span: 8 }} md={{ span: 12 }} sm={24}>
+                  <FormItem
+                    label="代理"
+                  >
+                   {getFieldDecorator('proxy', {
+                      rules: [{
+                        required: false,
+                        message: '请设置代理地址',
+                      }],
+                    })(
+                      <Input />
+                    )}
+                    {getFieldDecorator('port', {
+                      rules: [{
+                        required: false,
+                        message: '请设置代理端口',
+                      }],
+                    })(
+                      <Input />
+                    )}
+                  </FormItem>
+                </Col>
+                <Col xl={{ span: 8, offset: 2 }} lg={{ span: 10 }} md={{ span: 24 }} sm={24}>
+                  <FormItem
+                    label="User Agent"
+                  >
+                    {getFieldDecorator('userAgent', {
+                      rules: [{
+                        required: true,
+                        message: '请设置User Agent',
+                      }],
+                    })(
+                      <TextArea rows={4} />
+                    )}
+                  </FormItem>
+                  
+                </Col>
+              </Row>
+              <Row gutter={16}>
+                <Col lg={6} md={12} sm={24}>
+                  <FormItem
+                    label="Accept-Language"
+                  >
+                    {getFieldDecorator('acceptLanguage', {
+                      rules: [{
+                        required: true,
+                        message: '设置可接受语言',
+                      }],
+                    })(
+                      <Input />
+                    )}
+                  </FormItem>
+                </Col>
+                <Col xl={{ span: 6, offset: 2 }} lg={{ span: 8 }} md={{ span: 12 }} sm={24}>
+                  <FormItem
+                    label="显示器分辨率"
+                  >
+                    {getFieldDecorator('screen.width', {
+                      rules: [{
+                        required: true,
+                        message: '设置屏幕宽度',
+                      }],
+                    })(
+                      <Input />
+                    )}
+                    {getFieldDecorator('screen.height', {
+                      rules: [{
+                        required: true,
+                        message: '设置屏幕高度',
+                      }],
+                    })(
+                      <Input />
+                    )}
+                    
+                  </FormItem>
+                </Col>
+                <Col xl={{ span: 8, offset: 2 }} lg={{ span: 10 }} md={{ span: 24 }} sm={24}>
+                  <FormItem
+                    label="浏览器分辨率"
+                  >
+                   {getFieldDecorator('size.width', {
+                      rules: [{
+                        required: true,
+                        message: '设置浏览器宽度',
+                      }],
+                    })(
+                      <Input />
+                    )}
+                    {getFieldDecorator('size.height', {
+                      rules: [{
+                        required: true,
+                        message: '设置浏览器高度',
+                      }],
+                    })(
+                      <Input />
+                    )}
+                    
+                  </FormItem>
+                </Col>
+              </Row>
+            </Form>
+          </Card>
+
+          <FooterToolbar>
+       
+            <Button 
+              type="primary"
+              onClick={this.onSaveEnv}
+            >
+              保存
+            </Button>
+          </FooterToolbar>
+        </div>
+      </Fragment>
     )
   }
 }

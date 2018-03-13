@@ -4,7 +4,7 @@
 import dva from 'dva';
 import { message } from 'antd';
 import './index.css';
-import Vorlon from '../models/vorlon';
+import Mall from '../models/mall';
 
 function handleErrorMessage(errorMessage) {
   if (errorMessage.indexOf('target exists') > -1) {
@@ -29,7 +29,7 @@ window.onbeforeunload = () => {
   window.Disposes.map(dispose => dispose());
 };
 
-app.model(Vorlon);
+app.model(Mall);
 app.router(require('../routes/index'));
 
 app.start('#electron_container');

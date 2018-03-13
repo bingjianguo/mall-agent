@@ -10,6 +10,8 @@ import { autoCheckUpdate } from './updater';
 
 import { PORT } from '../shared/constants';
 
+import './preload.js';
+
 log.info('(index) app  start >>>>>>>>>>>>>>>>>>');
 
 if (isDev) {
@@ -35,14 +37,14 @@ app.on('ready', () => {
   // extension.registerExtensions();
 
   // 加载 devtools extension
-  if (isDev) {
-    BrowserWindow.addDevToolsExtension(
-      join($dirname, '../../extensions/redux-devtools/2.11.1_0'),
-    );
-    BrowserWindow.addDevToolsExtension(
-      join($dirname, '../../extensions/react-developer-tools/0.15.4_0'),
-    );
-  }
+  // if (isDev) {
+  //   BrowserWindow.addDevToolsExtension(
+  //     join($dirname, '../../extensions/redux-devtools/2.11.1_0'),
+  //   );
+  //   BrowserWindow.addDevToolsExtension(
+  //     join($dirname, '../../extensions/react-developer-tools/0.15.4_0'),
+  //   );
+  // }
 });
 
 // 放一个空绑定，保证无窗口时程序不会退出

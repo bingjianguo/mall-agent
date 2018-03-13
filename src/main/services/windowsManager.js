@@ -1,7 +1,7 @@
 import { app, session, BrowserWindow, ipcMain as ipc } from 'electron';
 import { format } from 'url';
 import log from 'electron-log';
-
+import path from 'path';
 
 import {
   WELCOME_WINDOW_WIDTH,
@@ -45,15 +45,28 @@ exports.newMainWindow = function newMainWindow() {
   });
 }
 
-exports.newMallSessionWindow = function(url, partition) {
+exports.newMallEnviromentWindow = function(url, env) {
+  const partition = env.id;
+  const { size } = env;
+  const { id, acceptLanguage, userAgent, proxy, port } = env;
+  const ses = session.fromPartition(`persist:${id}`);
+  const preload = path.join(__dirname, 'preload.js');
+  ses.setUserAgent(userAgent, acceptLanguage);
+  if (ses.setPreloads) {
+    ses.setPreloads([preload]);
+  }
+  
+
   const newWindow = new Window({
     url,
-    partition,
     htmlHash: WELCOME_HASH,
-    width: WELCOME_WINDOW_WIDTH,
-    height: WELCOME_WINDOW_HEIGHT,
+    width: size.width,
+    height: size.height,
     resizable: true,
-  
+    ses,
+    preload,
+    proxy, 
+    port
   }, () => {
     // checkLatest(false);
   });
@@ -129,27 +142,33 @@ class Window {
     }
     
     if (process.platform === 'darwin') localOpt.titleBarStyle = 'hidden';
+
+
+    const { ses, preload, proxy, port } = options;
     
-    let { partition = '' } = options; 
-    delete options.partition;
-    if (partition) {
-      partition = `persist:${partition}`;
+    
+    log.info(`in Customer Window Construcotr ------- `);
+    const webPreferences = {
+      webSecurity: false,
+      allowRunningInsecureContent: true,
+      nodeIntegration: true,
+    };
+
+    if (ses) {
+      webPreferences.session = ses;
+      delete options.ses;
     }
 
-    // const ses = session.fromPartition(partition);
-    // log.info(`in new welcome window ------- ${partition}`);
-    // log.info(ses);
-    log.info(`in new welcome window ------- ${partition}`);
+    if (preload) {
+      webPreferences.preload = preload;
+    }
+
+    
     this.browserWindow = new BrowserWindow({
       ...options,
       ...localOpt,
       show: false,
-      webPreferences: {
-        // webSecurity: true,
-        // allowRunningInsecureContent: true,
-        partition
-        // session: ses,
-      }
+      webPreferences
     });
 
     this.on('ready-to-show', () => {
@@ -161,14 +180,30 @@ class Window {
     this.handleEvent();
 
     this.webContents = this.browserWindow.webContents;
+
     // 禁用WebRTC暴露客户端IP地址
     this.webContents.setWebRTCIPHandlingPolicy('disable_non_proxied_udp');
 
     this.id = this.browserWindow.webContents.windowId = this.browserWindow.id;
     this.disposeFn = [];
     this.selfClosed = true;
-
-    this.browserWindow.loadURL(url);
+    if (proxy && port) {
+      log.info('proxy check');
+      this.webContents.session.setProxy({
+        proxyRules: `${proxy}:${port}`
+      }, (e) => {
+        log.info(`in callback of proxy ${e} `);
+        this.browserWindow.loadURL(url);
+      })
+    } else {
+      this.webContents.session.setProxy({
+        proxyRules: undefined
+      }, (e) => {
+        log.info(`in callback of proxy ${e} `);
+        this.browserWindow.loadURL(url);
+      });
+    }
+    
   }
 
   show = () => this.browserWindow.show();
