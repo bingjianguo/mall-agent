@@ -39,7 +39,7 @@ app.on('ready', () => {
   // 加载 devtools extension
 
   BrowserWindow.addDevToolsExtension(
-    join($dirname, '../../extensions/canvasdefender/1.1.0_0'),
+    join($dirname, '../extensions/canvasdefender/1.1.0_0'),
   );
   // BrowserWindow.addDevToolsExtension(
   //   join($dirname, '../../extensions/redux-devtools/2.11.1_0'),

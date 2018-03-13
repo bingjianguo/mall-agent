@@ -22,7 +22,6 @@
     "electron-updater": "^2.18.2",
     "fs-extra": "^0.30.0",
     "homedir": "^0.6.0",
-    "hybrid-inspect": "^0.0.5",
     "iconv-lite": "^0.4.19",
     "jschardet": "^1.5.1",
     "log": "*",
