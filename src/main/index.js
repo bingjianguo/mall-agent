@@ -37,14 +37,16 @@ app.on('ready', () => {
   // extension.registerExtensions();
 
   // 加载 devtools extension
-  // if (isDev) {
-  //   BrowserWindow.addDevToolsExtension(
-  //     join($dirname, '../../extensions/redux-devtools/2.11.1_0'),
-  //   );
-  //   BrowserWindow.addDevToolsExtension(
-  //     join($dirname, '../../extensions/react-developer-tools/0.15.4_0'),
-  //   );
-  // }
+
+  BrowserWindow.addDevToolsExtension(
+    join($dirname, '../../extensions/canvasdefender/1.1.0_0'),
+  );
+  // BrowserWindow.addDevToolsExtension(
+  //   join($dirname, '../../extensions/redux-devtools/2.11.1_0'),
+  // );
+
+  const extensions = BrowserWindow.getExtensions();
+  log.info('shit', extensions);
 });
 
 // 放一个空绑定，保证无窗口时程序不会退出

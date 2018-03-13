@@ -61,7 +61,7 @@
     "del-cli": "^0.2.1",
     "devtron": "^1.4.0",
     "dva": "^2.x",
-    "electron": "^1.8.3",
+    "electron": "^1.8.2",
     "electron-builder": "19.48.3",
     "electron-debug": "^1.0.1",
     "electron-devtools-installer": "^2.0.1",
