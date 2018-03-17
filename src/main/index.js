@@ -46,7 +46,7 @@ app.on('ready', () => {
   // );
 
   const extensions = BrowserWindow.getExtensions();
-  log.info('shit', extensions);
+  
 });
 
 // 放一个空绑定，保证无窗口时程序不会退出

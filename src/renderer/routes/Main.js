@@ -25,6 +25,7 @@ const formTailLayout = {
   wrapperCol: { span: 8, offset: 3 },
 };
 
+
 @connect((state) => {
   const { environments } = state.mall;
   return {
@@ -33,9 +34,10 @@ const formTailLayout = {
 })
 @Form.create({
   mapPropsToFields(props) {
+
     return {
       url: Form.createFormField({
-        value: 'http://www.baidu.com',
+        value: 'http://www.whoer.net',
       }),
       envIndex: Form.createFormField({
         value: '',
@@ -44,19 +46,55 @@ const formTailLayout = {
     }
   }
 })
+
 export default class MainRouter extends PureComponent {
 
   state = {
     currentEnv: {}
   }
+  /**
+   * 
+   */
+  onRefreshCookie = () => {
+    if (this.currentWindow) {
+      const { session } = this.currentWindow.webContents;
+      const { setFieldsValue, getFieldValue } = this.props.form;
+      const url = getFieldValue('url');
+      session.cookies.get({ url }, (error, cookies) => {
+        if (error) {
+          return
+        }
 
+        setFieldsValue({
+          cookie: JSON.stringify(cookies)
+        })
+        
+      })
+    }
+  }
+  /**
+   * 
+   */
   onSaveEnv = () => {
     const { dispatch, environments } = this.props;
+    const { setFieldsValue } = this.props.form;
     this.props.form.validateFieldsAndScroll((err, values) => {
       if (err) {
         return;
       }
-      const { proxy, port, userAgent, acceptLanguage, size, screen, envIndex, url } =values;
+      
+      const { 
+        proxy, 
+        port, 
+        userAgent, 
+        acceptLanguage, 
+        size, 
+        screen, 
+        envIndex, 
+        url,
+        cookie,
+        timezone
+      } =values;
       const env = environments[envIndex];
       env.proxy = proxy;
       env.userAgent = userAgent;
@@ -65,13 +103,14 @@ export default class MainRouter extends PureComponent {
       env.acceptLanguage = acceptLanguage;
       env.size = size;
       env.screen = screen;
-
+      env.cookie = cookie;
+      env.timezone = timezone;
       dispatch({
         type: 'mall/save',
         payload: {
           environments: [...environments]
         }
-      })
+      });
     });
   }
 
@@ -83,7 +122,7 @@ export default class MainRouter extends PureComponent {
       }
       const { envIndex, url } =values;
       const env = environments[envIndex];
-      windowManager.newMallEnviromentWindow(url, env);
+      this.currentWindow = windowManager.newMallEnviromentWindow(url, env);
     });
     
   }
@@ -92,13 +131,17 @@ export default class MainRouter extends PureComponent {
     const { environments } = this.props;
     const { setFieldsValue } = this.props.form;
     const env = environments[index];
-    const { name, proxy, port, userAgent, acceptLanguage, size, screen } = env;
+    const { name, proxy, port, userAgent, acceptLanguage, size, screen, cookie, timezone } = env;
     setFieldsValue({
-      name, proxy, port, userAgent, acceptLanguage, size, screen, envIndex: index
+      name, proxy, port, userAgent, acceptLanguage, size, screen, envIndex: index, cookie, timezone
     });
     this.setState({
       currentEnv: env
     });
+  }
+
+  componentWillReceiveProps() {
+    
   }
 
   render() {
@@ -184,9 +227,17 @@ export default class MainRouter extends PureComponent {
               <Row gutter={16}>
                 <Col lg={6} md={12} sm={24}>
                   <FormItem
-                    label="名称"
+                    label="名称/(时区)"
                   >
-                    {name}
+                    {name}<br />
+                    {getFieldDecorator('timezone', {
+                      rules: [{
+                        required: false,
+                        message: '请设置时区简称',
+                      }],
+                    })(
+                      <Input />
+                    )}
                   </FormItem>
                 </Col>
                 <Col xl={{ span: 6, offset: 2 }} lg={{ span: 8 }} md={{ span: 12 }} sm={24}>
@@ -286,6 +337,32 @@ export default class MainRouter extends PureComponent {
                       <Input />
                     )}
                     
+                  </FormItem>
+                </Col>
+              </Row>
+              <Row gutter={16}>
+                <Col span={24}>
+                  <FormItem
+                    label={(
+                      <Fragment>
+                        <span style={{marginRight: '10px'}}>窗口Cookie值</span>
+                        <Button
+                          size="small"
+                          onClick={this.onRefreshCookie}
+                        >
+                          导出当前值
+                        </Button>
+                      </Fragment>
+                    )}
+                  >
+                    {getFieldDecorator('cookie', {
+                      rules: [{
+                        required: false,
+                        message: '请输入需要替换的cookie值',
+                      }],
+                    })(
+                      <TextArea row={4}/>
+                    )}
                   </FormItem>
                 </Col>
               </Row>

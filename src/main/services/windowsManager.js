@@ -48,7 +48,7 @@ exports.newMainWindow = function newMainWindow() {
 exports.newMallEnviromentWindow = function(url, env) {
   const partition = env.id;
   const { size } = env;
-  const { id, acceptLanguage, userAgent, proxy, port } = env;
+  const { id, acceptLanguage, userAgent, proxy, port, cookie, screen } = env;
   const ses = session.fromPartition(`persist:${id}`);
   const preload = path.join(__dirname, 'preload.js');
   ses.setUserAgent(userAgent, acceptLanguage);
@@ -56,6 +56,28 @@ exports.newMallEnviromentWindow = function(url, env) {
     ses.setPreloads([preload]);
   }
   
+  if (cookie) {
+    try {
+      const cookieArray = JSON.parse(cookie);
+      // TO DO 同步设置cookie不知道会不会出现问题
+     
+      cookieArray.forEach((item) => {
+        const newCookie = {
+          url,
+          name: item.name,
+          value: item.value,
+          expirationDate: item.expirationDate
+        };
+        ses.cookies.set(newCookie, (err) => {
+          log.info(newCookie, err);
+        });
+      })
+    } catch(e) {
+      
+    }
+  }
+  
+  process.env.currentEnv = JSON.stringify(env);
 
   const newWindow = new Window({
     url,
@@ -66,7 +88,8 @@ exports.newMallEnviromentWindow = function(url, env) {
     ses,
     preload,
     proxy, 
-    port
+    port,
+    cookie
   }, () => {
     // checkLatest(false);
   });
@@ -144,7 +167,7 @@ class Window {
     if (process.platform === 'darwin') localOpt.titleBarStyle = 'hidden';
 
 
-    const { ses, preload, proxy, port } = options;
+    const { ses, preload, proxy, port, cookie } = options;
     
     
     log.info(`in Customer Window Construcotr ------- `);
@@ -163,6 +186,7 @@ class Window {
       webPreferences.preload = preload;
     }
 
+   
     
     this.browserWindow = new BrowserWindow({
       ...options,
