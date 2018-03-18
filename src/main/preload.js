@@ -45,13 +45,16 @@ process.once('loaded', () => {
       return time + (offset + diffZone ) * 3600 * 1000;
     }
 
+    
     targetDate.toString = () => {
       const str = OriginDate.prototype.toString.call(targetDate);
       const arr = str.split( /(GMT|UTC)([+-]\d\d\d\d)/g);
-      arr[2] = offset > 0 ? 
-        '+0' + Math.abs(offset) + '00'
-        :
-        '-0' + Math.abs(offset) + '00';
+      const addZero = (str,length) => {
+        return new Array(length - str.length + 1).join("0") + str;
+      }
+     
+      let temp = addZero(Math.abs(offset)+'', 2) + '00';
+      arr[2] = offset > 0 ? `+${temp}` : `-${temp}`;
       arr[3] = ` (${timezone})`;
       return arr.join('');
     }

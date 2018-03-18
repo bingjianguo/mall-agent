@@ -3,7 +3,7 @@
  */
 import React, { PureComponent, Fragment } from 'react';
 import { connect } from 'dva';
-import { Button, Form, Input, Select, Card, Row, Col, Tooltip }  from 'antd';
+import { Button, Form, Input, Select, Card, Row, Col, Tooltip, message }  from 'antd';
 import { remote } from 'electron';
 
 import TitleBar from '../components/TitleBar';
@@ -26,12 +26,7 @@ const formTailLayout = {
 };
 
 
-@connect((state) => {
-  const { environments } = state.mall;
-  return {
-    environments
-  };
-})
+
 @Form.create({
   mapPropsToFields(props) {
 
@@ -46,7 +41,12 @@ const formTailLayout = {
     }
   }
 })
-
+@connect((state) => {
+  const { environments } = state.mall;
+  return {
+    environments
+  };
+})
 export default class MainRouter extends PureComponent {
 
   state = {
@@ -111,6 +111,8 @@ export default class MainRouter extends PureComponent {
           environments: [...environments]
         }
       });
+
+      message.success('保存成功');
     });
   }
 
