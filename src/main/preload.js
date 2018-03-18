@@ -10,8 +10,10 @@ process.once('loaded', () => {
   
   if (typeof module === 'object') {
     // Require Electron, IPC, other modules here
-    window.module = module;
-    module = undefined;
+    // window.module = module;
+    // module = undefined;
+    window.originModule = module;
+    window.module = undefined;
   }
 
   /**

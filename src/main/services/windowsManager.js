@@ -45,7 +45,7 @@ exports.newMainWindow = function newMainWindow() {
   });
 }
 
-exports.newMallEnviromentWindow = function(url, env) {
+exports.newMallEnviromentWindowAsync = function(url, env) {
   const partition = env.id;
   const { size } = env;
   const { id, acceptLanguage, userAgent, proxy, port, cookie, screen } = env;
@@ -56,45 +56,57 @@ exports.newMallEnviromentWindow = function(url, env) {
     ses.setPreloads([preload]);
   }
   
+  process.env.currentEnv = JSON.stringify(env);
+
+  const promises = [];
+  // 页面启动以后的回调
   if (cookie) {
     try {
       const cookieArray = JSON.parse(cookie);
       // TO DO 同步设置cookie不知道会不会出现问题
-     
+    
       cookieArray.forEach((item) => {
         const newCookie = {
           url,
           name: item.name,
           value: item.value,
-          expirationDate: item.expirationDate
+          expirationDate: item.expirationDate,
+          // domain: item.domain,
+          // path: item.path,
+          // secure: item.secure,
+          // httpOnly: item.httpOnly
         };
-        ses.cookies.set(newCookie, (err) => {
-          log.info(newCookie, err);
-        });
+        promises.push(new Promise((resolve) => {
+          ses.cookies.set(newCookie, (err) => {
+            log.info(newCookie, err);
+            resolve();
+          });
+        }));
+     
       })
     } catch(e) {
       
     }
   }
-  
-  process.env.currentEnv = JSON.stringify(env);
-
-  const newWindow = new Window({
-    url,
-    htmlHash: WELCOME_HASH,
-    width: size.width,
-    height: size.height,
-    resizable: true,
-    ses,
-    preload,
-    proxy, 
-    port,
-    cookie
-  }, () => {
-    // checkLatest(false);
-  });
- 
-  return newWindow;
+  return Promise.all(promises).then(() => {
+    const newWindow = new Window({
+      url,
+      htmlHash: WELCOME_HASH,
+      width: size.width,
+      height: size.height,
+      resizable: true,
+      ses,
+      preload,
+      proxy, 
+      port,
+      cookie
+    }, () => {
+      // checkLatest(false);
+      log.info('finish all cookie setting');
+      
+    });
+    return newWindow;
+  })
 }
 
 exports.newWelcomeWindow = function newWelcomeWindow() {
@@ -186,7 +198,6 @@ class Window {
       webPreferences.preload = preload;
     }
 
-   
     
     this.browserWindow = new BrowserWindow({
       ...options,
@@ -216,7 +227,7 @@ class Window {
       this.webContents.session.setProxy({
         proxyRules: `${proxy}:${port}`
       }, (e) => {
-        log.info(`in callback of proxy ${e} `);
+        log.info(`${url} in ${proxy}:${port} in callback of proxy ${e} `);
         this.browserWindow.loadURL(url);
       })
     } else {

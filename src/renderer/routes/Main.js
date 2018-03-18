@@ -57,21 +57,52 @@ export default class MainRouter extends PureComponent {
    * 
    */
   onRefreshCookie = () => {
-    if (this.currentWindow) {
-      const { session } = this.currentWindow.webContents;
+    if (this.currentWindowPromise) {
+      this.currentWindowPromise.then((currentWindow) => {
+        const { session } = currentWindow.webContents;
+        const { setFieldsValue, getFieldValue } = this.props.form;
+        const url = getFieldValue('url');
+        session.cookies.get({ url }, (error, cookies) => {
+          if (error) {
+            return
+          }
+  
+          setFieldsValue({
+            cookie: JSON.stringify(cookies)
+          })
+          
+        })
+      });
+    }
+  }
+
+  onUpdateCookie = () => {
+    this.currentWindowPromise.then((currentWindow) => {
+      const { session } = currentWindow.webContents;
       const { setFieldsValue, getFieldValue } = this.props.form;
       const url = getFieldValue('url');
-      session.cookies.get({ url }, (error, cookies) => {
-        if (error) {
-          return
-        }
+      const cookie = getFieldValue('cookie');
+      const { currentEnv } = this.state;
 
-        setFieldsValue({
-          cookie: JSON.stringify(cookies)
-        })
-        
-      })
-    }
+      const cookieArray = JSON.parse(cookie);
+      // TO DO 同步设置cookie不知道会不会出现问题
+      
+      cookieArray.forEach((item) => {
+        const newCookie = {
+          url,
+          name: item.name,
+          value: item.value,
+          expirationDate: item.expirationDate,
+          domain: item.domain,
+          path: item.path,
+          secure: item.secure,
+          httpOnly: item.httpOnly
+        };
+        session.cookies.set(newCookie, (err) => {
+          console.log(newCookie, err);
+        });
+      });
+    });
   }
   /**
    * 
@@ -94,7 +125,7 @@ export default class MainRouter extends PureComponent {
         envIndex, 
         url,
         cookie,
-        timezone
+        timezone,
       } =values;
       const env = environments[envIndex];
       env.proxy = proxy;
@@ -126,7 +157,7 @@ export default class MainRouter extends PureComponent {
       }
       const { envIndex, url } =values;
       const env = environments[envIndex];
-      this.currentWindow = windowManager.newMallEnviromentWindow(url, env);
+      this.currentWindowPromise = windowManager.newMallEnviromentWindowAsync(url, env);
     });
     
   }
@@ -370,6 +401,11 @@ export default class MainRouter extends PureComponent {
                       </Fragment>
                     )}
                   >
+                    {/* {getFieldDecorator('cookieUrl', {
+                      rules: [],
+                    })(
+                      <Input placeHolder="请输入cookie的域名地址" />
+                    )} */}
                     {getFieldDecorator('cookie', {
                       rules: [{
                         required: false,
@@ -385,13 +421,22 @@ export default class MainRouter extends PureComponent {
           </Card>
 
           <FooterToolbar>
-       
+            <Button 
+              type="primary"
+              onClick={this.onUpdateCookie}
+              style={{display: 'none'}}
+            >
+              设置cookie
+            </Button>
             <Button 
               type="primary"
               onClick={this.onSaveEnv}
+              
             >
               保存
             </Button>
+
+
           </FooterToolbar>
         </div>
       </Fragment>
