@@ -8,6 +8,7 @@ import { remote } from 'electron';
 
 import TitleBar from '../components/TitleBar';
 import FooterToolbar from '../components/FooterToolbar';
+import { TIMEZONEMAP } from '../../shared/constants';
 
 import Styles from './Main.less';
 const { windowManager } = remote.getGlobal('services');
@@ -105,6 +106,7 @@ export default class MainRouter extends PureComponent {
       env.screen = screen;
       env.cookie = cookie;
       env.timezone = timezone;
+      env.tzoffset = TIMEZONEMAP[timezone];
       dispatch({
         type: 'mall/save',
         payload: {
@@ -238,7 +240,18 @@ export default class MainRouter extends PureComponent {
                         message: '请设置时区简称',
                       }],
                     })(
-                      <Input />
+                      <Select>
+                        {
+                          Object.keys(TIMEZONEMAP).map((tzkey) => {
+                            const offset = TIMEZONEMAP[tzkey];
+                            return (
+                              <Option value={tzkey}>
+                                {tzkey}
+                              </Option>
+                            )
+                          })
+                        }
+                      </Select>
                     )}
                   </FormItem>
                 </Col>

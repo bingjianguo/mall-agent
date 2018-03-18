@@ -30,6 +30,15 @@ export const PUBLISH_LOGS = 'PUBLISH_LOGS';
 export const MAIN_HASH = '/main';
 export const WELCOME_HASH = '/welcome';
 
+export const TIMEZONEMAP = {
+  CDT: -5,
+  EDT: -4,
+  MDT: -6,
+  PDT: -7,
+  JST: +9,
+  CET: +1
+};
+
 export const FAKE_DATA_ARRAY = [{
   id: 0,
   name: '美国东部时区LA',
@@ -40,7 +49,7 @@ export const FAKE_DATA_ARRAY = [{
   screen: { width: 1920, height: 1080},
   size: {width: 1904, height: 970},
   timezone: 'CDT', // EST
-  tzoffset: -5
+  tzoffset: TIMEZONEMAP['CDT']
 }, {
   id: 1,
   name: '美国中央时区CT',
@@ -51,5 +60,5 @@ export const FAKE_DATA_ARRAY = [{
   screen: { width: 1920, height: 1080},
   size: { width: 1903, height: 974 },
   timezone: 'EDT', // CST
-  tzoffset: -4
+  tzoffset: TIMEZONEMAP['EDT']
 }]
