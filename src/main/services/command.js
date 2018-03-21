@@ -20,7 +20,7 @@ if (process.env.NODE_ENV === 'development') {
   logger = tracer.dailyfile({
     root: os.tmpdir(),
     maxLogFiles: 10,
-    allLogsFileName: 'AlipayCommand',
+    allLogsFileName: 'SZCommand',
     format: '{{timestamp}} <{{title}}> {{message}}',
     dateformat: 'yyyy-MM-dd HH:MM:ss',
   });
